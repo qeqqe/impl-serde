@@ -36,7 +36,10 @@ pub struct D {
     st: String,
     se: HashSet<i32>,
     mp: HashMap<String, i64>,
+    un: Unnamed,
 }
+#[derive(Serialize)]
+pub struct Unnamed(i32, u32, f64, f32);
 
 fn main() {
     let np = Points {
@@ -47,6 +50,7 @@ fn main() {
         us: UselessStruct { field: 4 },
     };
 
+    let un = Unnamed(1, 2, 3.12, 4.23);
     let d = D {
         points: np,
         v: vec![1, 2, 3, 4, 5],
@@ -58,6 +62,7 @@ fn main() {
             ("Banama".to_owned(), 7),
             ("Watermelom".to_owned(), 10),
         ]),
+        un,
     };
 
     println!("{}", d.to_str());
