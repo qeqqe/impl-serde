@@ -6,12 +6,25 @@ trait Serializer {
     fn to_str(&self) -> String;
 }
 
-#[derive(Serialize)]
+impl std::fmt::Display for Points {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "formated shhit")
+    }
+}
+
+#[derive(Debug, Serialize)]
 pub struct Points {
     x: i64,
     y: i64,
     z: i64,
     dim: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct D {
+    points: Points,
+    v: Vec<i32>,
+    c: char,
 }
 
 fn main() {
@@ -22,7 +35,11 @@ fn main() {
         dim: "3d".into(),
     };
 
-    let mut st = String::new();
-    st.push_str(&format!("{}", np.x));
-    println!("{}", np.to_str());
+    let d = D {
+        points: np,
+        v: vec![1, 2, 3, 4, 5],
+        c: 'c',
+    };
+
+    println!("{}", d.to_str());
 }
