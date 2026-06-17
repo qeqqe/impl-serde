@@ -35,7 +35,8 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
         let is_str = seg_ident == "String" || seg_ident.to_lowercase() == "char";
         let is_num =
             seg_ident.starts_with('i') || seg_ident.starts_with('u') || seg_ident.starts_with('f');
-        let is_vec = seg_ident == "Vec"; // need to handle non-(primitive/string/char) types
+        let is_vec = seg_ident == "Vec" || seg_ident == "HashSet"; // need to handle non-(primitive/string/char) types
+        let is_map = seg_ident == "HashMap";
 
         let comma = if i > 0 { ",\n" } else { "" };
 
@@ -54,21 +55,36 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
         else if is_vec {
             quote! {
                 json.push_str(#comma);
-                {
-                    // one extra level inside vec
-                    let item_indent = "  ".repeat(depth + 2);
-                    let v = &self.#field_ident;
-                    json.push_str(&format!("{}\"{}\": [", indent, #field_name));
-                    if v.is_empty() {
-                        json.push_str("]");
-                    } else {
-                        json.push_str("\n");
-                        for (idx, item) in v.iter().enumerate() {
-                            if idx > 0 { json.push_str(",\n"); }
-                            json.push_str(&format!("{}{}", item_indent, item));
-                        }
-                        json.push_str(&format!("\n{}]", indent));
+                // one extra level inside vec
+                let item_indent = "  ".repeat(depth + 2);
+                let v = &self.#field_ident;
+                json.push_str(&format!("{}\"{}\": [", indent, #field_name));
+                if v.is_empty() {
+                    json.push_str("]");
+                } else {
+                    json.push_str("\n");
+                    for (idx, item) in v.iter().enumerate() {
+                        if idx > 0 { json.push_str(",\n"); }
+                        json.push_str(&format!("{}{}", item_indent, item));
                     }
+                    json.push_str(&format!("\n{}]", indent));
+                }
+            }
+        } else if is_map {
+            quote! {
+                json.push_str(#comma);
+                let item_ident = "  ".repeat(depth + 2);
+                let map = &self.#field_ident;
+                json.push_str(&format!("{}\"{}\": {{", indent, #field_name));
+                if map.is_empty() {
+                    json.push_str("]")
+                } else {
+                    json.push_str("\n");
+                    for (idx, (k, v)) in map.iter().enumerate() {
+                        if idx > 0 { json.push_str(",\n"); }
+                        json.push_str(&format!("{}\"{}\": {}", item_ident, k, v));
+                    }
+                    json.push_str(&format!("\n{}}}", indent));
                 }
             }
         }

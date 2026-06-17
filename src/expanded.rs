@@ -3,6 +3,7 @@
 extern crate std;
 #[prelude_import]
 use std::prelude::rust_2024::*;
+use std::collections::{HashMap, HashSet};
 use impl_serde::Serialize;
 trait Serializer {
     fn to_str(&self) -> String;
@@ -12,11 +13,41 @@ impl std::fmt::Display for Points {
         f.write_fmt(format_args!("formated shhit"))
     }
 }
+pub struct UselessStruct {
+    field: i64,
+}
+impl Serializer for UselessStruct {
+    fn to_str(&self) -> String {
+        self.__to_str_depth(0)
+    }
+}
+impl UselessStruct {
+    fn __to_str_depth(&self, depth: usize) -> String {
+        let indent = "  ".repeat(depth + 1);
+        let mut json = String::new();
+        json.push_str("{\n");
+        json.push_str("");
+        json.push_str(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(
+                    format_args!("{0}\"{1}\": {2}", indent, "field", self.field),
+                )
+            }),
+        );
+        json.push_str(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("\n{0}}}", "  ".repeat(depth)))
+            }),
+        );
+        json
+    }
+}
 pub struct Points {
     x: i64,
     y: i64,
     z: i64,
     dim: String,
+    us: UselessStruct,
 }
 impl Serializer for Points {
     fn to_str(&self) -> String {
@@ -60,6 +91,13 @@ impl Points {
                 )
             }),
         );
+        json.push_str(",\n");
+        json.push_str(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}\"{1}\": ", indent, "us"))
+            }),
+        );
+        json.push_str(&self.us.__to_str_depth(depth + 1));
         json.push_str(
             &::alloc::__export::must_use({
                 ::alloc::fmt::format(format_args!("\n{0}}}", "  ".repeat(depth)))
@@ -73,6 +111,8 @@ pub struct D {
     v: Vec<i32>,
     c: char,
     st: String,
+    se: HashSet<i32>,
+    mp: HashMap<String, i64>,
 }
 impl Serializer for D {
     fn to_str(&self) -> String {
@@ -92,36 +132,32 @@ impl D {
         );
         json.push_str(&self.points.__to_str_depth(depth + 1));
         json.push_str(",\n");
-        {
-            let item_indent = "  ".repeat(depth + 2);
-            let v = &self.v;
-            json.push_str(
-                &::alloc::__export::must_use({
-                    ::alloc::fmt::format(format_args!("{0}\"{1}\": [", indent, "v"))
-                }),
-            );
-            if v.is_empty() {
-                json.push_str("]");
-            } else {
-                json.push_str("\n");
-                for (idx, item) in v.iter().enumerate() {
-                    if idx > 0 {
-                        json.push_str(",\n");
-                    }
-                    json.push_str(
-                        &::alloc::__export::must_use({
-                            ::alloc::fmt::format(
-                                format_args!("{0}{1}", item_indent, item),
-                            )
-                        }),
-                    );
+        let item_indent = "  ".repeat(depth + 2);
+        let v = &self.v;
+        json.push_str(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}\"{1}\": [", indent, "v"))
+            }),
+        );
+        if v.is_empty() {
+            json.push_str("]");
+        } else {
+            json.push_str("\n");
+            for (idx, item) in v.iter().enumerate() {
+                if idx > 0 {
+                    json.push_str(",\n");
                 }
                 json.push_str(
                     &::alloc::__export::must_use({
-                        ::alloc::fmt::format(format_args!("\n{0}]", indent))
+                        ::alloc::fmt::format(format_args!("{0}{1}", item_indent, item))
                     }),
                 );
             }
+            json.push_str(
+                &::alloc::__export::must_use({
+                    ::alloc::fmt::format(format_args!("\n{0}]", indent))
+                }),
+            );
         }
         json.push_str(",\n");
         json.push_str(
@@ -139,6 +175,64 @@ impl D {
                 )
             }),
         );
+        json.push_str(",\n");
+        let item_indent = "  ".repeat(depth + 2);
+        let v = &self.se;
+        json.push_str(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}\"{1}\": [", indent, "se"))
+            }),
+        );
+        if v.is_empty() {
+            json.push_str("]");
+        } else {
+            json.push_str("\n");
+            for (idx, item) in v.iter().enumerate() {
+                if idx > 0 {
+                    json.push_str(",\n");
+                }
+                json.push_str(
+                    &::alloc::__export::must_use({
+                        ::alloc::fmt::format(format_args!("{0}{1}", item_indent, item))
+                    }),
+                );
+            }
+            json.push_str(
+                &::alloc::__export::must_use({
+                    ::alloc::fmt::format(format_args!("\n{0}]", indent))
+                }),
+            );
+        }
+        json.push_str(",\n");
+        let item_ident = "  ".repeat(depth + 2);
+        let map = &self.mp;
+        json.push_str(
+            &::alloc::__export::must_use({
+                ::alloc::fmt::format(format_args!("{0}\"{1}\": {{", indent, "mp"))
+            }),
+        );
+        if map.is_empty() {
+            json.push_str("]")
+        } else {
+            json.push_str("\n");
+            for (idx, (k, v)) in map.iter().enumerate() {
+                if idx > 0 {
+                    json.push_str(",\n");
+                }
+                json.push_str(
+                    &::alloc::__export::must_use({
+                        ::alloc::fmt::format(
+                            format_args!("{0}\"{1}\": {2}", item_ident, k, v),
+                        )
+                    }),
+                );
+            }
+            json.push_str(
+                &::alloc::__export::must_use({
+                    ::alloc::fmt::format(format_args!("\n{0}}}", indent))
+                }),
+            );
+        }
         json.push_str(
             &::alloc::__export::must_use({
                 ::alloc::fmt::format(format_args!("\n{0}}}", "  ".repeat(depth)))
@@ -153,6 +247,7 @@ fn main() {
         y: 2,
         z: 5,
         dim: "3d".into(),
+        us: UselessStruct { field: 4 },
     };
     let d = D {
         points: np,
@@ -164,6 +259,12 @@ fn main() {
         ),
         c: 'c',
         st: String::from("Allo"),
+        se: HashSet::from([1, 2, 2, 4]),
+        mp: HashMap::from([
+            ("Apple".to_owned(), 2),
+            ("Banama".to_owned(), 7),
+            ("Watermelom".to_owned(), 10),
+        ]),
     };
     {
         ::std::io::_print(format_args!("{0}\n", d.to_str()));

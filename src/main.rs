@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::collections::{HashMap, HashSet};
+
 use impl_serde::Serialize;
 
 trait Serializer {
@@ -13,11 +15,17 @@ impl std::fmt::Display for Points {
 }
 
 #[derive(Serialize)]
+pub struct UselessStruct {
+    field: i64,
+}
+
+#[derive(Serialize)]
 pub struct Points {
     x: i64,
     y: i64,
     z: i64,
     dim: String,
+    us: UselessStruct,
 }
 
 #[derive(Serialize)]
@@ -26,6 +34,8 @@ pub struct D {
     v: Vec<i32>,
     c: char,
     st: String,
+    se: HashSet<i32>,
+    mp: HashMap<String, i64>,
 }
 
 fn main() {
@@ -34,6 +44,7 @@ fn main() {
         y: 2,
         z: 5,
         dim: "3d".into(),
+        us: UselessStruct { field: 4 },
     };
 
     let d = D {
@@ -41,6 +52,12 @@ fn main() {
         v: vec![1, 2, 3, 4, 5],
         c: 'c',
         st: String::from("Allo"),
+        se: HashSet::from([1, 2, 2, 4]),
+        mp: HashMap::from([
+            ("Apple".to_owned(), 2),
+            ("Banama".to_owned(), 7),
+            ("Watermelom".to_owned(), 10),
+        ]),
     };
 
     println!("{}", d.to_str());
