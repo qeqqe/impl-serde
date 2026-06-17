@@ -12,7 +12,7 @@ impl std::fmt::Display for Points {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Serialize)]
 pub struct Points {
     x: i64,
     y: i64,
@@ -20,11 +20,12 @@ pub struct Points {
     dim: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Serialize)]
 pub struct D {
     points: Points,
     v: Vec<i32>,
     c: char,
+    st: String,
 }
 
 fn main() {
@@ -39,6 +40,7 @@ fn main() {
         points: np,
         v: vec![1, 2, 3, 4, 5],
         c: 'c',
+        st: String::from("Allo"),
     };
 
     println!("{}", d.to_str());

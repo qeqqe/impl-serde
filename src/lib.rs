@@ -7,7 +7,6 @@ extern crate proc_macro;
 #[proc_macro_derive(Serialize)]
 pub fn serialize_struct(_item: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(_item as DeriveInput);
-    println!("{:#?}", ast);
 
     let ident = ast.ident;
     let fields = match ast.data {
@@ -25,12 +24,12 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
         let seg_ident = match &field.ty {
             syn::Type::Path(type_path) => {
                 if let Some(seg) = type_path.path.segments.last() {
-                    &seg.ident.to_string()
+                    seg.ident.to_string()
                 } else {
-                    "_Invalid"
+                    "_Invalid".to_string()
                 }
             }
-            _ => "_Invalid",
+            _ => "_Invalid".to_string(),
         };
 
         let is_str = seg_ident == "String" || seg_ident.to_lowercase() == "char";
@@ -38,33 +37,47 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
             seg_ident.starts_with('i') || seg_ident.starts_with('u') || seg_ident.starts_with('f');
         let is_vec = seg_ident == "Vec"; // need to handle non-(primitive/string/char) types
 
-        let comma = if i > 0 { "," } else { "" };
+        let comma = if i > 0 { ",\n" } else { "" };
 
         if is_str {
             quote! {
-                json.push_str(&format!("{}\"{}\": \"{}\"",#comma, #field_name, self.#field_ident));
+                json.push_str(#comma);
+                json.push_str(&format!("{}\"{}\": \"{}\"", indent, #field_name, self.#field_ident));
             }
         } else if is_num {
             quote! {
-                json.push_str(&format!("{}\"{}\": {}", #comma, #field_name, self.#field_ident));
+                json.push_str(#comma);
+                json.push_str(&format!("{}\"{}\": {}", indent, #field_name, self.#field_ident));
             }
-        } else if is_vec {
+        }
+        //
+        else if is_vec {
             quote! {
-                json.push_str(&format!("\"{}\": [\n", #field_name));
-                let v = &self.#field_ident;
-                for item in v {
-                    json.push_str(&format!("{},\n", item));
+                json.push_str(#comma);
+                {
+                    // one extra level inside vec
+                    let item_indent = "  ".repeat(depth + 2);
+                    let v = &self.#field_ident;
+                    json.push_str(&format!("{}\"{}\": [", indent, #field_name));
+                    if v.is_empty() {
+                        json.push_str("]");
+                    } else {
+                        json.push_str("\n");
+                        for (idx, item) in v.iter().enumerate() {
+                            if idx > 0 { json.push_str(",\n"); }
+                            json.push_str(&format!("{}{}", item_indent, item));
+                        }
+                        json.push_str(&format!("\n{}]", indent));
+                    }
                 }
-                json.push_str("\n],\n");
             }
         }
         // for now we will derive that the type is struct (already serialized)
         else {
             quote! {
-
-                json.push_str(&format!("\"{}\": ", #field_name));
-                json.push_str(&self.#field_ident.to_str());
-                json.push_str(",\n");
+                json.push_str(#comma);
+                json.push_str(&format!("{}\"{}\": ", indent, #field_name));
+                json.push_str(&self.#field_ident.__to_str_depth(depth + 1)); // nested indentation
             }
         }
     });
@@ -72,10 +85,17 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
     quote! {
         impl Serializer for #ident {
             fn to_str(&self) -> String {
+                self.__to_str_depth(0)
+            }
+        }
+
+        impl #ident {
+            fn __to_str_depth(&self, depth: usize) -> String {
+                let indent = "  ".repeat(depth + 1);
                 let mut json = String::new();
                 json.push_str("{\n");
                 #(#field_serializations)*
-                json.push_str("\n}");
+                json.push_str(&format!("\n{}}}", "  ".repeat(depth)));
                 json
             }
         }
