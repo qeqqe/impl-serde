@@ -1,65 +1,59 @@
-#![allow(dead_code, unused)]
-
-mod serialize;
-
 use core::panic;
-
 use proc_macro::TokenStream;
-use syn::{DeriveInput, Expr::Field};
+use quote::quote;
+use syn::{Data, DeriveInput, Fields};
 
 extern crate proc_macro;
-
-#[derive(Debug)]
-enum Type {
-    Itype, // also includes unsigined
-    String,
-}
-
-type FieldTuple = (String, Type);
-
-fn get_fields(data: &syn::Data) -> Vec<FieldTuple> {
-    let fields = match data {
-        syn::Data::Struct(data_struct) => &data_struct.fields,
-        _ => unimplemented!(),
-    };
-
-    let mut fields_tuple: Vec<FieldTuple> = Vec::new();
-
-    if let syn::Fields::Named { .. } = fields {
-        for field in fields {
-            let name = field.ident.as_ref().unwrap().to_string();
-            let path_ty = match &field.ty {
-                syn::Type::Path(type_path) => type_path
-                    .path
-                    .segments
-                    .last()
-                    .unwrap()
-                    .ident
-                    .to_string()
-                    .clone(),
-                _ => todo!(),
-            };
-
-            let ty = match path_ty {
-                s if s.starts_with("i") || s.starts_with("u") => Type::Itype,
-                s if s.starts_with("String") => Type::String,
-                _ => {
-                    panic!("type not available")
-                }
-            };
-
-            fields_tuple.push((name, ty));
-        }
-    }
-
-    fields_tuple
-}
-
 #[proc_macro_derive(Serialize)]
 pub fn serialize_struct(_item: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(_item as DeriveInput);
 
-    let fields: Vec<FieldTuple> = get_fields(&ast.data);
-    println!("{:#?}", fields);
-    TokenStream::new()
+    let ident = ast.ident;
+    let fields = match ast.data {
+        Data::Struct(data_struct) => match data_struct.fields {
+            Fields::Named(fields_named) => fields_named.named,
+            _ => panic!("Only named fields are supported"),
+        },
+        _ => panic!("Serialize derive only works on Structs"),
+    };
+
+    let field_serializations = fields.iter().enumerate().map(|(i, field)| {
+        let field_ident = field.ident.as_ref().unwrap();
+        let field_name = field_ident.to_string();
+
+        let is_str = match &field.ty {
+            syn::Type::Path(type_path) => {
+                if let Some(seg) = type_path.path.segments.last() {
+                    seg.ident == "String"
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        };
+
+        let comma = if i > 0 { "," } else { "" };
+
+        if is_str {
+            quote! {
+                json.push_str(&format!("{}\"{}\": \"{}\"",#comma, #field_name, self.#field_ident));
+            }
+        } else {
+            quote! {
+                json.push_str(&format!("{}\"{}\": {}", #comma, #field_name, self.#field_ident));
+            }
+        }
+    });
+    quote! {
+        impl Serializer for #ident {
+            fn to_str(&self) -> String {
+                let mut json = String::new();
+                json.push_str("{");
+                #(#field_serializations)*
+                json.push_str("}");
+                json
+            }
+        }
+    }
+    .into()
 }
