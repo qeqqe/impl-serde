@@ -8,11 +8,6 @@ use impl_serde::Serialize;
 trait Serializer {
     fn to_str(&self) -> String;
 }
-impl std::fmt::Display for Points {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("formated shhit"))
-    }
-}
 pub struct UselessStruct {
     field: i64,
 }
