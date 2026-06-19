@@ -2,7 +2,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use impl_serde::Serialize;
+use ser_macros::Serialize;
 
 trait Serializer {
     fn to_str(&self) -> String;

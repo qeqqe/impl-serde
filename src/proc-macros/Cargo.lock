@@ -3,13 +3,6 @@
 version = 4
 
 [[package]]
-name = "impl-serde"
-version = "0.1.0"
-dependencies = [
- "proc-macros",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -19,7 +12,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc-macros"
+name = "proc_macros"
 version = "0.1.0"
 dependencies = [
  "quote",
