@@ -1,7 +1,7 @@
 use core::panic;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, token::Token};
+use syn::{Data, DeriveInput, Fields};
 
 extern crate proc_macro;
 #[proc_macro_derive(Serialize)]
