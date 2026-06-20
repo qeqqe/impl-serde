@@ -1,13 +1,16 @@
 use core::panic;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields};
+use syn::{Data, DeriveInput, Fields, token::Token};
 
 extern crate proc_macro;
 #[proc_macro_derive(Serialize)]
 pub fn serialize_struct(_item: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(_item as DeriveInput);
     let ident = ast.ident;
+
+    let is_generic = ast.generics.params.len() != 0;
+
     let method_body = match &ast.data {
         Data::Struct(data_struct) => match &data_struct.fields {
             Fields::Named(fields_named) => {
@@ -61,8 +64,8 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
                                 json.push_str("\n");
                                 for (idx, item) in v.iter().enumerate() {
                                     if idx > 0 { json.push_str(",\n"); }
-                                    json.push_str(&format!("{}{}", item_indent, item));
-                                }
+                                    json.push_str(&format!("{}{}", item_indent, item.__to_str_depth(depth + 2)));
+                                }            
                                 json.push_str(&format!("\n{}]", indent));
                             }
                         }
@@ -105,21 +108,18 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
             }
             Fields::Unnamed(fields_unamed) => {
                 let values = &fields_unamed.unnamed;
-                if values.len() == 0 {
+                if values.is_empty() {
                     panic!("Need fields to put in json");
                 }
-                let value_serializations = values.iter().enumerate().map(|(i, _)| {
+               let value_serializations = values.iter().enumerate().map(|(i, _)| {
                     let comma = if i > 0 { ",\n" } else { "" };
                     let idx = syn::Index::from(i);
                     quote! {
                         json.push_str(#comma);
-
                         let item_indent = "  ".repeat(depth + 2);
-                        json.push_str(&format!("{}{}",item_indent, &self.#idx));
-
+                        json.push_str(&format!("{}{}", item_indent, self.#idx.__to_str_depth(depth + 2)));
                     }
                 });
-
                 quote! {
                     let indent = "  ".repeat(depth + 1);
                     let mut json = String::new();
@@ -134,18 +134,46 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
         _ => panic!("Serialize derive only works on Structs"),
     };
 
-    quote! {
-        impl Serializer for #ident {
-            fn to_str(&self) -> String {
-                self.__to_str_depth(0)
-            }
-        }
+        if !is_generic {
+            quote! {
+                impl Serializer for #ident {
+                    fn to_str(&self) -> String {
+                        self.__to_str_depth(0)
+                    }
 
-        impl #ident {
-            fn __to_str_depth(&self, depth: usize) -> String {
-                #method_body
+                    fn __to_str_depth(&self, depth: usize) -> String {
+                        #method_body
+                    }
+                }
             }
-        }
+            .into()
+        } else {
+            let type_params: Vec<&syn::Ident> = ast.generics.type_params().map(|p| &p.ident).collect();
+
+            let generics_tokens = if !type_params.is_empty() {
+                quote! { <#(#type_params),*> }
+            } else {
+                quote! {}
+            };
+
+            let where_clause = if !type_params.is_empty() {
+                quote! { where #(#type_params: Serializer),* }
+            } else {
+                quote! {}
+            };
+
+            quote! {
+                impl #generics_tokens Serializer for #ident #generics_tokens #where_clause {
+                    fn to_str(&self) -> String {
+                        self.__to_str_depth(0)
+                    }
+
+                    fn __to_str_depth(&self, depth: usize) -> String {
+                        #method_body
+                    }
+                }
+            }
+            .into()
     }
-    .into()
 }
+

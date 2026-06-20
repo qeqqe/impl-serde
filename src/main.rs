@@ -1,12 +1,10 @@
 #![allow(dead_code)]
-
 use std::collections::{HashMap, HashSet};
+mod macros;
 
 use ser_macros::Serialize;
 
-trait Serializer {
-    fn to_str(&self) -> String;
-}
+serialize_primitive!();
 
 #[derive(Serialize)]
 pub struct UselessStruct {
@@ -23,7 +21,30 @@ pub struct Points {
 }
 
 #[derive(Serialize)]
-pub struct D {
+pub struct Unnamed(i32, u32, f64, f32);
+#[derive(Debug, Serialize)]
+pub struct SomeOtherStuff(i32);
+
+#[derive(Debug, Serialize)]
+pub struct SomeMoreStuff(u32);
+
+#[derive(Serialize)]
+pub struct GenTest<T, U>
+where
+    T: Serializer,
+    U: Serializer,
+{
+    val: T,
+    val_vec: Vec<U>,
+    norm: i32,
+}
+
+#[derive(Serialize)]
+pub struct D<T, U>
+where
+    T: Serializer,
+    U: Serializer,
+{
     points: Points,
     v: Vec<i32>,
     c: char,
@@ -31,11 +52,15 @@ pub struct D {
     se: HashSet<i32>,
     mp: HashMap<String, i64>,
     un: Unnamed,
+    g: GenTest<T, U>,
 }
-#[derive(Serialize)]
-pub struct Unnamed(i32, u32, f64, f32);
 
 fn main() {
+    let g = GenTest {
+        val: SomeMoreStuff(12),
+        val_vec: Vec::<SomeOtherStuff>::new(),
+        norm: 2,
+    };
     let np = Points {
         x: 1,
         y: 2,
@@ -57,6 +82,7 @@ fn main() {
             ("Watermelom".to_owned(), 10),
         ]),
         un,
+        g,
     };
 
     println!("{}", d.to_str());
