@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["src/proc-macros"]
+members = ["src/deser-macros","src/ser-macros"]
 
 [dependencies]
-ser-macros = { path = "src/proc-macros", package = "proc-macros" }
+ser-macros = { path = "src/ser-macros" }
+deser-macros = { path = "src/deser-macros" }
