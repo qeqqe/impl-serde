@@ -6,6 +6,10 @@ edition = "2024"
 [workspace]
 members = ["src/deser-macros","src/ser-macros"]
 
+[workspace.dependencies]
+quote = "1.0.45"
+syn = { version = "2.0.117", features = ["extra-traits"] }
+
 [dependencies]
 ser-macros = { path = "src/ser-macros" }
 deser-macros = { path = "src/deser-macros" }

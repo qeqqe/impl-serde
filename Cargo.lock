@@ -5,6 +5,10 @@ version = 4
 [[package]]
 name = "deser-macros"
 version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "impl-serde"

@@ -1,16 +1,18 @@
 use std::collections::{HashMap, HashSet};
 mod macros;
 
+use deser_macros::Deserialize;
 use ser_macros::Serialize;
 
-serialize_primitive!();
+serialize_trait!();
+deserialize_trait!();
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct UselessStruct {
     field: i64,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Points {
     x: i64,
     y: i64,
@@ -19,15 +21,15 @@ pub struct Points {
     us: UselessStruct,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Unnamed(i32, u32, f64, f32);
-#[derive(Debug, Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SomeOtherStuff(i32);
 
-#[derive(Debug, Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct SomeMoreStuff(u32);
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GenTest<T, U>
 where
     T: Serializer,
@@ -38,7 +40,7 @@ where
     norm: i32,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct D<T, U>
 where
     T: Serializer,
@@ -84,5 +86,7 @@ fn main() {
         g,
     };
 
-    println!("{}", d.to_str());
+    let data_str = d.to_str();
+
+    println!("{}", data_str);
 }

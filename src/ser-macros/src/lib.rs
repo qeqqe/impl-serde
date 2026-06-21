@@ -123,7 +123,7 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
                     let mut json = String::new();
                     json.push_str("{\n");
                     #(#value_serializations)*
-                    json.push_str(&format!("\n{}}}", "  ".repeat(depth)));
+                    json.push_str(&format!("\n{}]", "  ".repeat(depth)));
                     json
                 }
             }
