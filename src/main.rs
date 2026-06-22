@@ -7,12 +7,12 @@ use ser_macros::Serialize;
 serialize_trait!();
 deserialize_trait!();
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UselessStruct {
     field: i64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Points {
     x: i64,
     y: i64,
@@ -21,30 +21,30 @@ pub struct Points {
     us: UselessStruct,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Unnamed(i32, u32, f64, f32);
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SomeOtherStuff(i32);
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SomeMoreStuff(u32);
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GenTest<T, U>
 where
-    T: Serializer,
-    U: Serializer,
+    T: Serializer + Deserializer,
+    U: Serializer + Deserializer,
 {
     val: T,
     val_vec: Vec<U>,
     norm: i32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct D<T, U>
 where
-    T: Serializer,
-    U: Serializer,
+    T: Serializer + Deserializer,
+    U: Serializer + Deserializer,
 {
     points: Points,
     v: Vec<i32>,
@@ -87,6 +87,9 @@ fn main() {
     };
 
     let data_str = d.to_str();
-
     println!("{}", data_str);
+    let json_value = parse_json(&data_str);
+    let deser = D::<SomeMoreStuff, SomeOtherStuff>::deserialize(&json_value);
+
+    println!("{:#?}", deser);
 }

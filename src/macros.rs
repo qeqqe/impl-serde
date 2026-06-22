@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! serialize_trait {
     () => {
-        trait Serializer {
+        pub trait Serializer {
             fn to_str(&self) -> String;
             fn __to_str_depth(&self, depth: usize) -> String;
         }
@@ -66,7 +66,7 @@ macro_rules! serialize_trait {
 macro_rules! deserialize_trait {
     () => {
         #[derive(Debug)]
-        enum JsonValue {
+        pub enum JsonValue {
             Null,
             Bool(bool),
             Number(f64),
@@ -77,18 +77,16 @@ macro_rules! deserialize_trait {
 
         trait Visitor: Sized {
             type Output;
-            fn visit_str(self, v: &str) -> Self::Output;
-            fn visit_number(self, v: f64) -> Self::Output;
             fn visit_seq(self, seq: &[JsonValue]) -> Self::Output;
             fn visit_map(self, map: &std::collections::HashMap<String, JsonValue>) -> Self::Output;
         }
 
-        trait Deserialize: Sized {
+        pub trait Deserializer: Sized {
             fn deserialize(v: &JsonValue) -> Self;
         }
 
         // primitives
-        impl Deserialize for String {
+        impl Deserializer for String {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Str(s) => s.clone(),
@@ -96,7 +94,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for char {
+        impl Deserializer for char {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Str(s) => s.chars().next().expect("empty string for char"),
@@ -104,7 +102,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for bool {
+        impl Deserializer for bool {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Bool(b) => *b,
@@ -113,7 +111,7 @@ macro_rules! deserialize_trait {
             }
         }
         // numero
-        impl Deserialize for f64 {
+        impl Deserializer for f64 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n,
@@ -121,7 +119,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for f32 {
+        impl Deserializer for f32 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as f32,
@@ -129,7 +127,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for i8 {
+        impl Deserializer for i8 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as i8,
@@ -137,7 +135,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for i16 {
+        impl Deserializer for i16 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as i16,
@@ -145,7 +143,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for i32 {
+        impl Deserializer for i32 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as i32,
@@ -153,7 +151,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for i64 {
+        impl Deserializer for i64 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as i64,
@@ -161,7 +159,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for i128 {
+        impl Deserializer for i128 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as i128,
@@ -169,7 +167,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for isize {
+        impl Deserializer for isize {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as isize,
@@ -177,7 +175,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for u8 {
+        impl Deserializer for u8 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as u8,
@@ -185,7 +183,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for u16 {
+        impl Deserializer for u16 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as u16,
@@ -193,7 +191,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for u32 {
+        impl Deserializer for u32 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as u32,
@@ -201,7 +199,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for u64 {
+        impl Deserializer for u64 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as u64,
@@ -209,7 +207,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for u128 {
+        impl Deserializer for u128 {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as u128,
@@ -217,7 +215,7 @@ macro_rules! deserialize_trait {
                 }
             }
         }
-        impl Deserialize for usize {
+        impl Deserializer for usize {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Number(n) => *n as usize,
@@ -226,7 +224,7 @@ macro_rules! deserialize_trait {
             }
         }
 
-        impl<T: Deserialize> Deserialize for Vec<T> {
+        impl<T: Deserializer> Deserializer for Vec<T> {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Array(arr) => arr.iter().map(|v| T::deserialize(v)).collect(),
@@ -235,7 +233,7 @@ macro_rules! deserialize_trait {
             }
         }
 
-        impl<T: Deserialize + Eq + std::hash::Hash> Deserialize for std::collections::HashSet<T> {
+        impl<T: Deserializer + Eq + std::hash::Hash> Deserializer for std::collections::HashSet<T> {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Array(arr) => arr.iter().map(|v| T::deserialize(v)).collect(),
@@ -244,7 +242,7 @@ macro_rules! deserialize_trait {
             }
         }
 
-        impl<V: Deserialize> Deserialize for std::collections::HashMap<String, V> {
+        impl<V: Deserializer> Deserializer for std::collections::HashMap<String, V> {
             fn deserialize(v: &JsonValue) -> Self {
                 match v {
                     JsonValue::Object(map) => map
@@ -254,6 +252,97 @@ macro_rules! deserialize_trait {
                     _ => panic!("expected object for HashMap"),
                 }
             }
+        }
+
+        // parsing
+        fn parse_json(input: &str) -> JsonValue {
+            parse_value(input.trim()).0
+        }
+
+        fn parse_value(s: &str) -> (JsonValue, &str) {
+            let s = s.trim_start();
+            match s.chars().next().expect("empty input") {
+                '{' => parse_object(&s[1..]),
+                '[' => parse_array(&s[1..]),
+                '"' => {
+                    let (st, rest) = parse_str_inner(&s[1..]);
+                    (JsonValue::Str(st), rest)
+                }
+                't' => (JsonValue::Bool(true), &s[4..]),
+                'f' => (JsonValue::Bool(false), &s[5..]),
+                'n' => (JsonValue::Null, &s[4..]),
+                _ => parse_number(s),
+            }
+        }
+
+        fn parse_object(s: &str) -> (JsonValue, &str) {
+            let mut map = std::collections::HashMap::new();
+            let mut s = s.trim_start();
+            if s.starts_with('}') {
+                return (JsonValue::Object(map), &s[1..]);
+            }
+            loop {
+                s = s.trim_start();
+                let inner = s.strip_prefix('"').expect("expected string key");
+                let (key, rest) = parse_str_inner(inner);
+                s = rest.trim_start().strip_prefix(':').expect("expected ':'");
+                let (val, rest) = parse_value(s);
+                map.insert(key, val);
+                s = rest.trim_start();
+                if let Some(r) = s.strip_prefix('}') {
+                    return (JsonValue::Object(map), r);
+                }
+                s = s.strip_prefix(',').expect("expected ','");
+            }
+        }
+
+        fn parse_array(s: &str) -> (JsonValue, &str) {
+            let mut arr = Vec::new();
+            let mut s = s.trim_start();
+            if s.starts_with(']') {
+                return (JsonValue::Array(arr), &s[1..]);
+            }
+            loop {
+                let (val, rest) = parse_value(s);
+                arr.push(val);
+                s = rest.trim_start();
+                if let Some(r) = s.strip_prefix(']') {
+                    return (JsonValue::Array(arr), r);
+                }
+                s = s.strip_prefix(',').expect("expected ','");
+            }
+        }
+
+        fn parse_str_inner(s: &str) -> (String, &str) {
+            let mut result = String::new();
+            let mut chars = s.char_indices();
+            while let Some((i, c)) = chars.next() {
+                match c {
+                    '"' => return (result, &s[i + 1..]),
+                    '\\' => {
+                        if let Some((_, esc)) = chars.next() {
+                            result.push(match esc {
+                                '"' => '"',
+                                '\\' => '\\',
+                                'n' => '\n',
+                                'r' => '\r',
+                                't' => '\t',
+                                c => c,
+                            });
+                        }
+                    }
+                    _ => result.push(c),
+                }
+            }
+            panic!("unterminated string");
+        }
+
+        fn parse_number(s: &str) -> (JsonValue, &str) {
+            let end = s
+                .find(|c: char| !matches!(c, '0'..='9' | '.' | '-' | '+' | 'e' | 'E'))
+                .unwrap_or(s.len());
+            let n: f64 = s[..end].parse().expect("invalid number");
+            (JsonValue::Number(n), &s[end..])
         }
     };
 }

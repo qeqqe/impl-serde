@@ -21,7 +21,7 @@ pub fn deser(_input: TokenStream) -> TokenStream {
     };
 
     let where_clause = if is_generic {
-        quote! { where #(#type_params: Deserialize),* }
+        quote! { where #(#type_params: Serializer + Deserializer),* }
     } else {
         quote! {}
     };
@@ -41,14 +41,14 @@ pub fn deser(_input: TokenStream) -> TokenStream {
 
     let output = match &ast.data {
         Data::Struct(data_struct) => match &data_struct.fields {
-            // struct UselessFuckingStruct { x: T, y: U } -> visit_map
+            // struct UselessFuckingStruct { x: T, y: U } -> visit_map (cus top-level of json is a map)
             Fields::Named(fields_named) => {
                 let field_extractions = fields_named.named.iter().map(|field| {
                     let field_ident = field.ident.as_ref().unwrap();
                     let field_name = field_ident.to_string();
                     let field_ty = &field.ty;
                     quote! {
-                        #field_ident: <#field_ty as Deserialize>::deserialize(
+                        #field_ident: <#field_ty as Deserializer>::deserialize(
                             map.get(#field_name)
                                .unwrap_or_else(|| panic!("missing field: {}", #field_name))
                         ),
@@ -64,18 +64,12 @@ pub fn deser(_input: TokenStream) -> TokenStream {
                         fn visit_map(self, map: &std::collections::HashMap<String, JsonValue>) -> Self::Output {
                             #ident { #(#field_extractions)* }
                         }
-                        fn visit_str(self, _v: &str) -> Self::Output {
-                            panic!("expected item for {}, got str", #ident_name)
-                        }
-                        fn visit_number(self, _v: f64) -> Self::Output {
-                            panic!("expected item for {}, got number", #ident_name)
-                        }
                         fn visit_seq(self, _s: &[JsonValue]) -> Self::Output {
                             panic!("expected item for {}, got array", #ident_name)
                         }
                     }
 
-                    impl #generics_tokens Deserialize for #ident #generics_tokens #where_clause {
+                    impl #generics_tokens Deserializer for #ident #generics_tokens #where_clause {
                         fn deserialize(v: &JsonValue) -> Self {
                             match v {
                                 JsonValue::Object(map) => #visitor_ctor.visit_map(map),
@@ -91,7 +85,7 @@ pub fn deser(_input: TokenStream) -> TokenStream {
                     fields_unnamed.unnamed.iter().enumerate().map(|(i, field)| {
                         let field_ty = &field.ty;
                         quote! {
-                            <#field_ty as Deserialize>::deserialize(
+                            <#field_ty as Deserializer>::deserialize(
                                 seq.get(#i)
                                    .unwrap_or_else(|| panic!("missing index {} in tuple", #i))
                             ),
@@ -110,15 +104,9 @@ pub fn deser(_input: TokenStream) -> TokenStream {
                         fn visit_map(self, _m: &std::collections::HashMap<String, JsonValue>) -> Self::Output {
                             panic!("expected array for {}, got object", #ident_name)
                         }
-                        fn visit_str(self, _v: &str) -> Self::Output {
-                            panic!("expected array for {}, got str", #ident_name)
-                        }
-                        fn visit_number(self, _v: f64) -> Self::Output {
-                            panic!("expected array for {}, got number", #ident_name)
-                        }
                     }
 
-                    impl #generics_tokens Deserialize for #ident #generics_tokens #where_clause {
+                    impl #generics_tokens Deserializer for #ident #generics_tokens #where_clause {
                         fn deserialize(v: &JsonValue) -> Self {
                             match v {
                                 JsonValue::Array(seq) => #visitor_ctor.visit_seq(seq),
@@ -136,4 +124,3 @@ pub fn deser(_input: TokenStream) -> TokenStream {
 
     output.into()
 }
-

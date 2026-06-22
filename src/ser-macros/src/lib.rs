@@ -74,7 +74,7 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
                                     let map = &self.#field_ident;
                                     json.push_str(&format!("{}\"{}\": {{", indent, #field_name));
                                     if map.is_empty() {
-                                        json.push_str("]")
+                                        json.push_str("}")
                                     } else {
                                         json.push_str("\n");
                                         for (idx, (k, v)) in map.iter().enumerate() {
@@ -121,7 +121,7 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
                 quote! {
                     let indent = "  ".repeat(depth + 1);
                     let mut json = String::new();
-                    json.push_str("{\n");
+                    json.push_str("[\n");
                     #(#value_serializations)*
                     json.push_str(&format!("\n{}]", "  ".repeat(depth)));
                     json
@@ -155,7 +155,7 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
             };
 
             let where_clause = if !type_params.is_empty() {
-                quote! { where #(#type_params: Serializer),* }
+                quote! { where #(#type_params: Serializer + Deserializer),* }
             } else {
                 quote! {}
             };
