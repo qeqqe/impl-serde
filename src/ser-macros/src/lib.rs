@@ -9,7 +9,8 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(_item as DeriveInput);
     let ident = ast.ident;
 
-    let is_generic = !ast.generics.params.is_empty();
+    let type_params: Vec<&syn::Ident> = ast.generics.type_params().map(|p| &p.ident).collect();
+    let is_generic = !type_params.is_empty();
 
     let method_body = match &ast.data {
         Data::Struct(data_struct) => match &data_struct.fields {
@@ -146,7 +147,6 @@ pub fn serialize_struct(_item: TokenStream) -> TokenStream {
             }
             .into()
         } else {
-            let type_params: Vec<&syn::Ident> = ast.generics.type_params().map(|p| &p.ident).collect();
 
             let generics_tokens = if !type_params.is_empty() {
                 quote! { <#(#type_params),*> }
